@@ -12,7 +12,9 @@ from dundie.models.user import (
 )
 from dundie.db import ActiveSession
 from dundie.auth import SuperUser, AuthenticatedUser, CanChangeUserPassword
+from dundie.queue import queue
 from sqlalchemy.exc import IntegrityError
+
 from dundie.tasks.user import try_to_send_pwd_reset_email
 
 from fastapi.encoders import jsonable_encoder
@@ -130,11 +132,12 @@ async def change_password(
 async def send_password_reset_token(
     *,
     email: str = Body(embed=True),
-    background_tasks: BackgroundTasks,
+    # background_tasks: BackgroundTasks,
 ):
     """Sends an email with the token to reset password."""
 
-    background_tasks.add_task(try_to_send_pwd_reset_email, email=email)
+    # background_tasks.add_task(try_to_send_pwd_reset_email, email=email)
+    queue.enqueue(try_to_send_pwd_reset_email, email=email)
 
     return {
         "message": "If we found a user with that email, we sent a password reset token to it."
